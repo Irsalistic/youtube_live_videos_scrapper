@@ -9,7 +9,10 @@ from bs4 import BeautifulSoup
 def extract_live_stream_data(url, scroll_increment=20000, num_scroll_iterations=3):
     # Set up Selenium WebDriver
     chrome_options = webdriver.ChromeOptions()
-    driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
+    from selenium.webdriver.chrome.service import Service
+    from selenium.webdriver.common.by import By
+
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
     driver.get(url)
 
     # Wait for the page to load
@@ -24,7 +27,7 @@ def extract_live_stream_data(url, scroll_increment=20000, num_scroll_iterations=
             time.sleep(1)  # Wait for the newly loaded videos to appear
 
             # Find all video elements
-            video_elements = driver.find_elements_by_css_selector('div.style-scope.ytd-rich-grid-media')
+            video_elements = driver.find_elements(By.CSS_SELECTOR, 'div.style-scope.ytd-rich-grid-media')
 
             # Flag to determine if there are still live videos in the new content
             live_videos_found = False
@@ -32,11 +35,12 @@ def extract_live_stream_data(url, scroll_increment=20000, num_scroll_iterations=
             # Extract data of live streaming videos
             for video_element in video_elements:
                 try:
-                    title_element = video_element.find_element_by_css_selector('h3.style-scope.ytd-rich-grid-media')
-                    live_indicator = video_element.find_element_by_css_selector(
+                    title_element = video_element.find_element(By.CSS_SELECTOR, 'h3.style-scope.ytd-rich-grid-media')
+                    live_indicator = video_element.find_element(
+                        By.CSS_SELECTOR,
                         'div#time-status span.style-scope.ytd-thumbnail-overlay-time-status-renderer')
                     if live_indicator.text.strip() == "LIVE":
-                        video_url = video_element.find_element_by_css_selector('a#thumbnail').get_attribute('href')
+                        video_url = video_element.find_element(By.CSS_SELECTOR, 'a#thumbnail').get_attribute('href')
                         video_id = video_url.split("v=")[1].split("&")[0]  # Extracting video ID from the URL
 
                         # Extracting video description

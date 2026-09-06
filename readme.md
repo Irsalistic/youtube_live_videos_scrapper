@@ -23,7 +23,7 @@ You need Google Chrome installed.
 python youtube_live_streams.py
 ```
 
-`live_videos.py` is an earlier variant. `location_nlp.py` and `location_api.py` are location helpers. `practice.py` is leftover scratch.
+`live_videos.py` is an earlier variant. `location_nlp.py` and `location_api.py` are location helpers.
 
 ## Output
 

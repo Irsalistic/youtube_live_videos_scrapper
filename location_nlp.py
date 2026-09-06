@@ -5,6 +5,8 @@ import multiprocessing
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
 from geopy.geocoders import Nominatim
 
@@ -39,7 +41,7 @@ def extract_live_stream_data(url, scroll_increment=20000, num_scroll_iterations=
             null_locations = multiprocessing.Value('i', 0)
 
         live_stream_data = []
-        driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
+        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
         driver.get(url)
         time.sleep(1)
 
@@ -50,19 +52,19 @@ def extract_live_stream_data(url, scroll_increment=20000, num_scroll_iterations=
             driver.execute_script(f"window.scrollTo(0, document.body.scrollHeight + {scroll_increment});")
             time.sleep(1)
 
-            video_elements = driver.find_elements_by_css_selector('div#dismissible')
+            video_elements = driver.find_elements(By.CSS_SELECTOR, 'div#dismissible')
 
             live_videos_found = False
             for video_element in video_elements:
                 try:
-                    title_element = video_element.find_element_by_id('video-title')
-                    live_indicator = video_element.find_element_by_css_selector(
+                    title_element = video_element.find_element(By.ID, 'video-title')
+                    live_indicator = video_element.find_element(By.CSS_SELECTOR,
                         'p.style-scope.ytd-badge-supported-renderer')
                     if live_indicator.text.strip() == "LIVE":
-                        description_element = video_element.find_element_by_css_selector(
+                        description_element = video_element.find_element(By.CSS_SELECTOR,
                             'div.metadata-snippet-container yt-formatted-string.metadata-snippet-text')
                         description = description_element.text.strip()
-                        video_url = video_element.find_element_by_css_selector('a#thumbnail').get_attribute('href')
+                        video_url = video_element.find_element(By.CSS_SELECTOR, 'a#thumbnail').get_attribute('href')
                         video_id = video_url.split("v=")[1].split("&")[0]
 
                         location, latitude, longitude = extract_location_from_title(title_element.text.strip())
@@ -126,7 +128,7 @@ def extract_location_from_title(title):
         tuple: A tuple containing the extracted location, latitude, and longitude.
     """
     nlp = spacy.load(
-        r"C:\Users\Hamza\AppData\Roaming\Python\Python311\site-packages\en_core_web_sm\en_core_web_sm-3.7.1")
+        "en_core_web_sm")
     doc = nlp(title)
     locations = [ent.text for ent in doc.ents if ent.label_ == "GPE" or ent.label_ == "LOC"]
     location = ", ".join(locations)
@@ -145,7 +147,7 @@ def extract_location_from_description(description):
         tuple: A tuple containing the extracted location, latitude, and longitude.
     """
     nlp = spacy.load(
-        r"C:\Users\Hamza\AppData\Roaming\Python\Python311\site-packages\en_core_web_sm\en_core_web_sm-3.7.1")
+        "en_core_web_sm")
     doc = nlp(description)
     locations = [ent.text for ent in doc.ents if
                  ent.label_ == "GPE" or ent.label_ == "LOC" or ent.label_ == "ORG" or ent.label_ == 'FAC']
